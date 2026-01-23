@@ -10,12 +10,12 @@ volatile unsigned long lastTime = 0;
 int duino_dt= 10; //In miliseconds Should be smaller than matlab`
 
 float rpm = 0;
-#define MotorGain 1 // Gain = RPM/Voltage (5000rpm max, 5v max) ) in RPM/Volt
+#define MotorGain 12500 // Gain = RPM/Voltage (5000rpm max, 5v max) ) in RPM/Volt
 
 int u =0;
 
 // Moving Average Filter
-#define FILTER_SIZE 5
+#define FILTER_SIZE 10
 float rpmBuffer[FILTER_SIZE] = {0};
 int bufferIndex = 0;
 float rpmFiltered = 0;
