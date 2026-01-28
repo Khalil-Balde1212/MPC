@@ -34,7 +34,7 @@ void loop() {
   if (timediff >= duino_dt) {
     detachInterrupt(
         digitalPinToInterrupt(InteruptPin)); // Stop counting while calculating
-    rpm = (float)pulseCount * Encoder_to_RPM * timediff;
+    rpm = (float)pulseCount * Encoder_to_RPM / timediff;
 
     Serial.println(rpm); // Send filtered RPM value to python
 

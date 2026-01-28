@@ -12,7 +12,7 @@ control_in = 1.0  # constant control input for simulation
 dt = 0.02  # time interval between readings
 
 global ser
-sim = simPlant.SimPlant(kp=2, time_constant=0.5)
+sim = simPlant.SimPlant(kp=1000, time_constant=0.9) # these were measured
 
 if (run_real):
     ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
