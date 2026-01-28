@@ -3,7 +3,7 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 
-ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+ser = serial.Serial('COM3', 9600, timeout=1)
 
 read_from_serial = lambda: readings.append(ser.readline().decode('utf-8').strip())
 readings = []
@@ -25,6 +25,11 @@ if __name__ == "__main__":
     print("Data collection complete.")
     ser.close()
 
+    for reading in readings:
+        if reading >= 5000 * 0.632:  # time constant
+            print("Time constant reached at reading:", reading)
+            break
+        
     # Convert readings to numeric values
     try:
         values = [float(x) for x in readings if x]
