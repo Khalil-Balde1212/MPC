@@ -1,5 +1,5 @@
 from time import sleep
-from plant_interface import initialize_connection, send_to_serial, read_from_serial
+from plant_interface import initialize_connection, send_to_serial, read_from_serial, cleanup
 
 if __name__ == "__main__":
     # Initialize - this starts the plant and live plot in background
@@ -9,10 +9,14 @@ if __name__ == "__main__":
     sleep(1)
     send_to_serial(0)
     sleep(1)
-    
+
     while(True):
-        print(read_from_serial())
-        sleep(0.5)
+        try:
+            print(read_from_serial())
+            sleep(0.5)
+        except KeyboardInterrupt:
+            cleanup() # close background process
+            break 
 
 
 

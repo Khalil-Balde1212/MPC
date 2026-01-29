@@ -188,13 +188,24 @@ def read_from_serial():
 
 def cleanup():
     """Clean up and stop background process"""
-    global plot_process
+    global plot_process, command_queue, reading_queue
     
     if plot_process and plot_process.is_alive():
+        print("Stopping plant and live plot...")
         plot_process.terminate()
-        plot_process.join(timeout=1)
+        plot_process.join(timeout=2)
+        
+        # Force kill if still alive
+        if plot_process.is_alive():
+            plot_process.kill()
+            plot_process.join()
+        
         plot_process = None
-        print("Stopped")
+    
+    # Clear queues
+    command_queue = None
+    reading_queue = None
+    print("Cleanup complete")
 
 def is_using_serial():
     """Check if using real serial (always returns False for now since we can't easily query the subprocess)"""
