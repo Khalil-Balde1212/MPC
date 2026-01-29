@@ -16,6 +16,7 @@ except ImportError:
 plot_process = None
 command_queue = None  # Send commands to plant
 reading_queue = None  # Receive readings from plant
+last_reading = None  # Cache the last reading to avoid None returns
 
 def _animation_process(cmd_queue, read_queue):
     """Background process that runs THE ONLY PLANT and plots it"""
@@ -43,7 +44,7 @@ def _animation_process(cmd_queue, read_queue):
     # Use simulated plant if serial not available
     if not use_serial:
         print("Using simulated plant")
-        sim_plant = SimPlant(kp=1000, time_constant=0.85, dt=0.005)
+        sim_plant = SimPlant(kp=1000, time_constant=0.85, dt=0.01)
         last_sample_time = time.time()
     
     # Data storage for plotting
@@ -130,7 +131,7 @@ def _animation_process(cmd_queue, read_queue):
     ax.grid(True)
     
     ani = animation.FuncAnimation(fig, animate, init_func=init_plot,
-                                   blit=False, interval=50, cache_frame_data=False)
+                                   blit=False, interval=10, cache_frame_data=False)
     plt.show()
 
 def initialize_connection():
@@ -151,7 +152,7 @@ def initialize_connection():
     plot_process.start()
     
     print(f"Plant and live plot started in background (PID: {plot_process.pid})")
-    time.sleep(0.5)  # Give it time to initialize
+    time.sleep(1)
 
 def send_to_serial(value):
     """Send command to the plant
@@ -166,25 +167,38 @@ def send_to_serial(value):
     
     command_queue.put(value)
 
-def read_from_serial():
+def read_from_serial(latest=True):
     """Read current value from the plant
+    Args:
+        latest: If True, flush queue and get most recent value. If False, get next sequential value.
     Returns:
-        Current plant output value, or None if no value available
+        Current plant output value (returns last cached value if queue empty)
     """
-    global reading_queue
+    global reading_queue, last_reading
     
     if reading_queue is None:
         print("Error: Call initialize_connection() first")
         return None
     
     try:
-        # Get most recent value
-        value = None
-        while not reading_queue.empty():
-            value = reading_queue.get_nowait()
-        return value
+        if latest:
+            # Flush queue and get most recent value (for slow sampling)
+            value = None
+            while not reading_queue.empty():
+                value = reading_queue.get_nowait()
+            if value is not None:
+                last_reading = value
+            return last_reading
+        else:
+            # Get one value from queue (for sequential reading)
+            if not reading_queue.empty():
+                value = reading_queue.get_nowait()
+                last_reading = value
+                return value
+            else:
+                return last_reading
     except:
-        return None
+        return last_reading
 
 def cleanup():
     """Clean up and stop background process"""
