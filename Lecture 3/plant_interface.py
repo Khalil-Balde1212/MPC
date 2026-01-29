@@ -15,8 +15,8 @@ except ImportError:
 # Global state for connection
 use_serial = False
 ser = None
-sim_plant = None
-last_sample_time = None
+sim_plant = SimPlant(kp=1000, time_constant=0.85, dt=0.005)
+last_sample_time = 0.0
 plot_process = None
 command_queue = None
 
@@ -26,6 +26,7 @@ def initialize_connection(start_plot=True):
         start_plot: If True, automatically start the live plot. Set to False when called from within the plot process.
     """
     global use_serial, ser, sim_plant, last_sample_time
+    
     
     if SERIAL_AVAILABLE:
         try:
@@ -47,7 +48,6 @@ def initialize_connection(start_plot=True):
     
     # If serial failed, use simulated plant
     print("Using simulated plant")
-    sim_plant = SimPlant(kp=1000, time_constant=0.85, dt=0.005)
     last_sample_time = time.time()
     
     # Start the live plot if requested
