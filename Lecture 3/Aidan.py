@@ -1,9 +1,9 @@
 import time
 import matplotlib.pyplot as plt
-from plant_interface import initialize_connection, read_from_serial, send_to_serial, cleanup, is_using_serial
+from plant_interface import initialize_connection, read_from_serial, send_to_serial, send_to_plot_serial, cleanup, is_using_serial
 
 if __name__ == "__main__":
-    # Initialize connection
+    # Initialize connection (this starts the live plot automatically)
     initialize_connection()
     
     # Collect data for a specific duration
@@ -17,7 +17,10 @@ if __name__ == "__main__":
         
         start_time = time.time()
         
-        send_to_serial(255)
+        # Send command to BOTH the main process plant AND the live plot
+        send_to_serial(255)  # For the main process data collection
+        send_to_plot_serial(255)  # For the live plot animation
+        
         while time.time() - start_time < duration:
             value = read_from_serial()
             if value is not None:
@@ -27,6 +30,7 @@ if __name__ == "__main__":
         
         # Send stop command (1 = minimal speed / 0x01)
         send_to_serial(0)
+        send_to_plot_serial(0)
         
         print("Data collection complete.")
         
