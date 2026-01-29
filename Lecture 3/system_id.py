@@ -46,6 +46,6 @@ if __name__ == "__main__":
         plt.grid(True)
         plt.show()
 
-        print(readings)
+        # print(readings)
     except ValueError:
         print("Error: Could not convert readings to numeric values")
