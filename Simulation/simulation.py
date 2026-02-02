@@ -128,3 +128,5 @@ if __name__ == "__main__":
     t, omega_cl, u_cl, e_cl = simulate_closed_loop_incremental_pi_rpm(omega_ref, Kp, Ki, T, dt, K, tau, 0.0, 2.5)
 
     plot_open_vs_closed(t, omega_ol, omega_cl, omega_ref, u_ol, u_cl)
+
+    print(pi_gains_from_settling_time(K, tau, Ts, zeta))
