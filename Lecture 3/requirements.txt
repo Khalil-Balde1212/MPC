@@ -1,0 +1,3 @@
+matplotlib
+multiprocess
+PyQt5
