@@ -36,10 +36,11 @@ def _animation_process(cmd_queue, read_queue):
                     print(f"Connected to serial port {port}")
                     use_serial = True
                     break
-                except (serial.SerialException, FileNotFoundError):
+                except (serial.SerialException, FileNotFoundError) as e:
+                    print(f"Failed to connect to {port}: {e}")
                     continue
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Error during serial connection: {e}")
     
     # Use simulated plant if serial not available
     if not use_serial:
@@ -75,8 +76,10 @@ def _animation_process(cmd_queue, read_queue):
     def send_value(value):
         """Send command to the plant (serial or simulated)"""
         if use_serial:
+            print(f"Sending {value} to serial port")
             ser.write(bytes([int(value)]))
         else:
+            print(f"Sending {value} to simulated plant")
             control_value = (value / 255.0) * 5.0
             sim_plant.set_input(control_value)
     

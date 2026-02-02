@@ -6,23 +6,29 @@ if __name__ == "__main__":
     initialize_connection()
 
     # Collect data for a specific duration
-    duration = 10  # seconds
+    duration = 5  # seconds
     dt = 0.05  # time interval between readings
     readings = []
 
     start_time = time()
     print("Starting data collection...")
-    send_to_serial(255)
 
     last_sample = start_time
     while time() - start_time < duration:
         current = time()
+        if(current - start_time) >= 2:
+            send_to_serial(255)  # Step input after 1 second
         if current - last_sample >= dt:
             readings.append(read_from_serial(latest=False))  # Get sequential values
             last_sample += dt  # Use += to prevent drift
         sleep(0.001)  # Small sleep to avoid busy-waiting
 
+
     send_to_serial(0)
+    for i in range(5):
+        send_to_serial(0)
+        sleep(0.1)
+
     print("Data collection complete.")
     cleanup()
     
