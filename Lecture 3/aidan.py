@@ -1,4 +1,4 @@
-from time import sleep
+from time import sleep, time
 from plant_interface import initialize_connection, send_to_serial, read_from_serial, cleanup
 
 if __name__ == "__main__":
@@ -6,10 +6,13 @@ if __name__ == "__main__":
     perror, ierror = 0.0, 0.0
 
     setpoint = 1000.0
-    dt = 0.02
+    dt = 0.1
     initialize_connection()
     send_to_serial(0)
     sleep(1)
+
+    start_time = time()
+    last_time = start_time
 
     while True:
         try:
@@ -20,22 +23,21 @@ if __name__ == "__main__":
                 sleep(0.1)
             cleanup()
             break
-
-        # Simple PI control loop
-        current_speed = read_from_serial()  # hypothetical function
-        perror = setpoint - current_speed
-        ierror += perror * dt
-
-        # Anti-windup for integral error
-        ierror = max(-2.5, min(2.5, ierror))
         
+        if time() - last_time >= dt:
+            # Simple PI control loop
+            current_speed = read_from_serial()  # hypothetical function
+            perror = setpoint - current_speed
+            ierror += perror * dt
 
-        u = kp * perror + ki * ierror
-        u *= 255/5
-        u = max(0, min(128, int(u)))  # clamp to 0-255
-        send_to_serial(u)
+            # Anti-windup for integral error
+            ierror = max(-2.5, min(2.5, ierror))
+            
 
-        sleep(dt)
-        
-        
+            u = kp * perror + ki * ierror
+            u *= 255.0/5.0
+            u = max(0, min(128, int(u)))  # clamp to 0-255
+            send_to_serial(u)
+            
+            
 
