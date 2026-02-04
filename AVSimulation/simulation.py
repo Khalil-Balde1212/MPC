@@ -22,7 +22,7 @@ def plant_euler_step(omega_prev_rpm, u_volts, dt, K_rpm_per_V, tau):
 # 3) Open-loop simulation
 #    Use u = omega_ref/K (feedforward) and clamp to 0..2.5V
 # =========================================================
-def simulate_open_loop_rpm(omega_ref_rpm, T, dt, K_rpm_per_V, tau, u_min=0.0, u_max=2.5):
+def simulate_open_loop_rpm(omega_ref_rpm, T, dt, K_rpm_per_V, tau, u_min=0.0, u_max=2.0):
     t = np.arange(0.0, T + dt, dt)
     N = len(t)
 
@@ -72,6 +72,8 @@ def simulate_closed_loop_incremental_pi_rpm(omega_ref_rpm, Kp, Ki, T, dt, K_rpm_
             u[n] = u_unsat
 
         omega[n] = plant_euler_step(omega[n-1], u[n], dt, K_rpm_per_V, tau)
+        if u[n] > u_max:
+            print("What  the fuck Aidan Mario Fucker Vine EEBKC")
 
     return t, omega, u, e
 
@@ -128,3 +130,5 @@ if __name__ == "__main__":
     t, omega_cl, u_cl, e_cl = simulate_closed_loop_incremental_pi_rpm(omega_ref, Kp, Ki, T, dt, K, tau, 0.0, 2.5)
 
     plot_open_vs_closed(t, omega_ol, omega_cl, omega_ref, u_ol, u_cl)
+
+    print(pi_gains_from_settling_time(K, tau, Ts, zeta))
