@@ -1,9 +1,9 @@
-import simPlant
+from libs.simPlant import SimPlant
 import simpy
 
 step_response = []
 
-plant = simPlant.SimPlant(kp=1000, time_constant=0.8, dt=0.01)
+plant = SimPlant(kp=1000, time_constant=0.8, dt=0.01)
 
 def collect_data(env, plant, duration):
     global step_response
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     print("Dynamic Matrix:")
     print(dynamicMatrix)
     # Save dynamic matrix as CSV
-    np.savetxt('dynamic_matrix.csv', dynamicMatrix, delimiter=',')
+    np.savetxt('./dynamic_matrix.csv', dynamicMatrix, delimiter=',')
     print("Dynamic matrix saved to dynamic_matrix.csv")
 
     control_moves = np.zeros(controlHorizon)

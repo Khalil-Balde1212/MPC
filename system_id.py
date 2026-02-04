@@ -1,4 +1,7 @@
-from plant_interface import initialize_connection, send_to_serial, read_from_serial, cleanup
+import sys
+import os
+
+from libs.plant_interface import initialize_connection, send_to_serial, read_from_serial, cleanup
 from time import time, sleep
 import matplotlib.pyplot as plt
 
@@ -7,6 +10,7 @@ if __name__ == "__main__":
 
     # Collect data for a specific duration
     duration = 5  # seconds
+    delay = 2
     dt = 0.05  # time interval between readings
     readings = []
 
@@ -16,8 +20,8 @@ if __name__ == "__main__":
     last_sample = start_time
     while time() - start_time < duration:
         current = time()
-        if(current - start_time) >= 2:
-            send_to_serial(255)  # Step input after 1 second
+        if(current - start_time) >= delay:
+            send_to_serial(255)  # Step input after 2 seconds
         if current - last_sample >= dt:
             readings.append(read_from_serial(latest=False))  # Get sequential values
             last_sample += dt  # Use += to prevent drift
@@ -35,7 +39,7 @@ if __name__ == "__main__":
     for reading in readings:
         if reading is not None:
             if reading > 5000*0.632:
-                print(f"time constant is approximately: {readings.index(reading)*dt} seconds")
+                print(f"time constant is approximately: {readings.index(reading)*dt-delay} seconds")
                 break
     # Convert readings to numeric values
     try:
