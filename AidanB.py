@@ -22,6 +22,7 @@ values = []
 
 while True:
     data = ser.read(4)
+    ser.flushInput()
     if len(data) == 4:
         value = struct.unpack('<f', data)[0]
         y.append(value)
