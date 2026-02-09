@@ -36,7 +36,9 @@ void loop() {
         digitalPinToInterrupt(InteruptPin)); // Stop counting while calculating
     rpm = (float)pulseCount * Encoder_to_RPM / timediff;
 
-    Serial.println(rpm); // Send filtered RPM value to python
+    byte* b = (byte*)&rpm; // Convert float to byte array
+
+    Serial.write(b, 4);
 
     pulseCount = 0;      // Reset count
     lastTime = millis(); // Reset timer

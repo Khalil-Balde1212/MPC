@@ -7,16 +7,16 @@ x = [0]
 y = [0]
 
 if sys.platform.startswith('win'):
-    ser = serial.Serial('COM3', 9600, timeout=1)
+    ser = serial.Serial('COM3', 9600, timeout=None)
 else:
-    ser = serial.Serial('ttyUSB0', 9600, timeout=1)
+    ser = serial.Serial('ttyUSB0', 9600, timeout=None)
 
 plt.ion()
 
 graph = plt.plot(x, y)[0]
 
 print("Starting data collection...")
-ser.write(b'\xff')
+ser.write(b'255')  # Send a signal to the Arduino to start sending data
 values = []
 
 
