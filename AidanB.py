@@ -23,7 +23,9 @@ fig, ax = plt.subplots()
 try:
     graph = plt.plot(x, y)[0]
     print("Starting data collection...")
-    ser.write(b'0xFF')
+    value_to_send = 255
+    little_endian_bytes = value_to_send.to_bytes(length=1, byteorder='little')
+    ser.write(little_endian_bytes)
 
     while True:
         data = ser.read(4)  # Just read, don't reset buffer!
@@ -46,9 +48,10 @@ except KeyboardInterrupt:
     print("\nInterrupted! Closing plot...")
 
 finally:
-    for _ in range(5):
-        ser.write(b'0x0')
-        time.sleep(0.1)
+    value_to_send = 0
+    little_endian_bytes = value_to_send.to_bytes(length=1, byteorder='little')
+    ser.write(little_endian_bytes)
+
     ser.close()
     plt.close('all')
     print("Cleanup complete")
