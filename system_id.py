@@ -42,7 +42,7 @@ if __name__ == "__main__":
     for reading in readings:
         if reading is not None:
             if reading > 5000*0.632:
-                print(f"time constant is approximately: {readings.index(reading)*dt-delay} seconds")
+                print(f"time constant is approximately: {readings.index(reading)*dt} seconds")
                 break
     # Convert readings to numeric values
     try:

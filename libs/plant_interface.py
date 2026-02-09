@@ -23,6 +23,7 @@ _ser = None
 _use_serial = False
 _last_sample_time = None
 _last_reading = None
+_rx_buffer = bytearray()
 
 
 def initialize_connection():
@@ -86,7 +87,7 @@ def read_from_serial(latest=True):
     Returns:
         Current plant output value
     """
-    global _last_sample_time, _last_reading
+    global _last_sample_time, _last_reading, _rx_buffer
     
     if not _initialized:
         print("Error: Call initialize_connection() first")
@@ -95,8 +96,17 @@ def read_from_serial(latest=True):
     if _use_serial:
         try:
             # Arduino sends RPM as 4-byte float via Serial.write((byte*)&rpm, 4)
-            while _ser.in_waiting >= 4:
-                raw = _ser.read(4)
+            needed = 4 - len(_rx_buffer)
+            if needed > 0:
+                _rx_buffer.extend(_ser.read(needed))
+
+            waiting = _ser.in_waiting
+            if waiting:
+                _rx_buffer.extend(_ser.read(waiting))
+
+            while len(_rx_buffer) >= 4:
+                raw = _rx_buffer[:4]
+                del _rx_buffer[:4]
                 _last_reading = struct.unpack('<f', raw)[0]  # little-endian float
         except (serial.SerialException, OSError, struct.error) as e:
             print(f"Serial read error: {e}")
@@ -116,7 +126,7 @@ def read_from_serial(latest=True):
 
 def cleanup():
     """Clean up and close connections"""
-    global _initialized, _ser, _sim_plant, _use_serial, _last_reading, _last_sample_time
+    global _initialized, _ser, _sim_plant, _use_serial, _last_reading, _last_sample_time, _rx_buffer
     
     if _ser:
         _ser.close()
@@ -126,6 +136,7 @@ def cleanup():
     _use_serial = False
     _last_reading = None
     _last_sample_time = None
+    _rx_buffer = bytearray()
     _initialized = False
     
     print("Cleanup complete")
