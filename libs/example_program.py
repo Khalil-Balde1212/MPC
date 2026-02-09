@@ -10,13 +10,13 @@ if __name__ == "__main__":
     send_to_serial(0)
     sleep(1)
 
-    while(True):
-        try:
-            print(read_from_serial())
-            sleep(0.5)
-        except KeyboardInterrupt:
-            cleanup() # close background process
-            break 
+    # while(True):
+    #     try:
+    #         print(read_from_serial())
+    #         sleep(0.5)
+    #     except KeyboardInterrupt:
+    #         cleanup() # close background process
+    #         break 
 
 
 
