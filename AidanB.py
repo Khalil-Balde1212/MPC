@@ -2,6 +2,7 @@ import serial
 import sys
 import struct
 import matplotlib.pyplot as plt
+import time
 
 x = [0]
 y = [0]
@@ -9,28 +10,43 @@ y = [0]
 if sys.platform.startswith('win'):
     ser = serial.Serial('COM3', 9600, timeout=None)
 else:
-    ser = serial.Serial('ttyUSB0', 9600, timeout=None)
+    ser = serial.Serial('/dev/ttyACM0', 9600, timeout=None)
 
 plt.ion()
 
-graph = plt.plot(x, y)[0]
+time.sleep(2)  # Wait for Arduino reset
+ser.reset_input_buffer()
 
-print("Starting data collection...")
-ser.write(b'255')  # Send a signal to the Arduino to start sending data
-values = []
+plt.ion()
+fig, ax = plt.subplots()
 
+try:
+    graph = plt.plot(x, y)[0]
+    print("Starting data collection...")
+    ser.write(b'255')
 
-while True:
-    data = ser.read(4)
-    ser.flushInput()
-    if len(data) == 4:
-        value = struct.unpack('<f', data)[0]
-        y.append(value)
-        x.append(x[-1]+1)
+    while True:
+        data = ser.read(4)  # Just read, don't reset buffer!
 
-    graph.remove()
+        if len(data) == 4:
+            value = struct.unpack('<f', data)[0]
+            y.append(value)
+            x.append(x[-1] + 1)
 
-    graph = plt.plot(x, y, color='g')[0]
-    plt.xlim(x[0], x[-1])
+            # More efficient plotting
+            graph.set_data(x, y)
+            ax.relim()
+            ax.autoscale_view()
+            plt.pause(0.001)
+        else:
+            print(f"Warning: got {len(data)} bytes instead of 4")
 
-    plt.pause(0.001)
+except KeyboardInterrupt:
+    print("\nInterrupted! Closing plot...")
+
+finally:
+    for _ in range(5):
+        ser.write(b'0x00')
+    ser.close()
+    plt.close('all')
+    print("Cleanup complete")
