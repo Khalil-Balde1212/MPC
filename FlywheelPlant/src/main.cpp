@@ -36,7 +36,7 @@ void loop() {
         digitalPinToInterrupt(InteruptPin)); // Stop counting while calculating
     rpm = (float)pulseCount * Encoder_to_RPM / timediff;
 
-    byte* b = (byte*)&rpm; // Convert float to byte array
+    byte *b = (byte *)&rpm; // Convert float to byte array
 
     Serial.write(b, 4);
 

@@ -23,13 +23,14 @@ fig, ax = plt.subplots()
 try:
     graph = plt.plot(x, y)[0]
     print("Starting data collection...")
-    ser.write(b'255')
+    ser.write(b'0xFF')
 
     while True:
         data = ser.read(4)  # Just read, don't reset buffer!
 
         if len(data) == 4:
             value = struct.unpack('<f', data)[0]
+            print(value)
             y.append(value)
             x.append(x[-1] + 1)
 
@@ -46,7 +47,8 @@ except KeyboardInterrupt:
 
 finally:
     for _ in range(5):
-        ser.write(b'0x00')
+        ser.write(b'0x0')
+        time.sleep(0.1)
     ser.close()
     plt.close('all')
     print("Cleanup complete")
