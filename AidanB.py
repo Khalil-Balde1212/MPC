@@ -3,8 +3,8 @@ import sys
 import struct
 import matplotlib.pyplot as plt
 
-x = 0
-y = 0
+x = [0]
+y = [0]
 
 if sys.platform.startswith('win'):
     ser = serial.Serial('COM3', 9600, timeout=1)
