@@ -8,12 +8,16 @@ class SimPlant:
         self.u = 0.0  # control input
 
     def set_input(self, u):
-        self.u = u
+        # Ensure u is always a scalar
+        if hasattr(u, '__iter__') and not isinstance(u, str):
+            self.u = float(u[0]) if len(u) > 0 else 0.0
+        else:
+            self.u = float(u)
 
     def step(self):
         # Simple linear plant: tau*y' + y = kp*u
         # Using forward Euler: y[n+1] = y[n] + (dt/tau) * (kp*u - y[n])
-        self.y = self.y + (self.dt / self.tau) * (self.kp * self.u - self.y)
+        self.y = float(self.y + (self.dt / self.tau) * (self.kp * self.u - self.y))
         return self.y
     
     def run(self, env):
