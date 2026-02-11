@@ -38,7 +38,7 @@ def build_dynamic_matrix(step_response, prediction_horizon, control_horizon):
 
 
 
-def RunDMC(env, plant, dynamicMatrix, setpoint):
+def RunDMC(env, plant, dynamicMatrix, setpoint, lambda_reg=0.01):
     if dynamicMatrix is None:
         raise ValueError("dynamicMatrix is None; build it before running DMC")
     control_horizon = dynamicMatrix.shape[1]
@@ -46,7 +46,7 @@ def RunDMC(env, plant, dynamicMatrix, setpoint):
     control_moves = np.zeros(control_horizon)  # Control move sequence
 
     reference_window = np.zeros(prediction_horizon)  # Reference trajectory for prediction horizon
-    
+    delta_u = np.zeros(control_horizon)  # Control move increments
     time_step = 0
     previous_output = 0.0
 
@@ -56,7 +56,7 @@ def RunDMC(env, plant, dynamicMatrix, setpoint):
     A = dynamicMatrix
     
     while(True):
-        # sliding reference window
+        # sliding setpoint window for prediction horizon
         start_idx = min(time_step, len(setpoint) - prediction_horizon)
         end_idx = min(start_idx + prediction_horizon, len(setpoint))
         
@@ -66,27 +66,25 @@ def RunDMC(env, plant, dynamicMatrix, setpoint):
             reference_window[:end_idx - start_idx] = setpoint[start_idx:end_idx]
             reference_window[end_idx - start_idx:] = setpoint[-1]
 
+
         # Model prediction: y_pred = A * u + current_output_deviation
-        output_deviation = plant.y - previous_output
+        output_deviation = plant.y - previous_output ## phi
         prediction = A @ control_moves + output_deviation
 
-        # MPC control law: minimize (reference - prediction)^2
         error = reference_window - prediction
         
-        # Simple least squares solution with regularization to prevent instability
-        lambda_reg = 0.01  # Regularization parameter
+        # My favourite equation :(
         ATA_reg = A.T @ A + lambda_reg * np.eye(control_horizon)
-        delta_u = np.linalg.solve(ATA_reg, A.T @ error)
-        
-        # Apply control move constraints to prevent explosion
-        delta_u = np.clip(delta_u, 0, 2.0)  # Limit control moves
+        delta_u = np.linalg.inv(ATA_reg) @ A.T @ error
         
         # Shift control moves and add new one
         control_moves[1:] = control_moves[:-1]
-        control_moves[0] = delta_u[0]
+        control_moves += delta_u  # Apply only the first control move increment
+
+        np.clip(control_moves, 0, 2, out=control_moves)  # Clip control moves to limits
         
         # Apply first control move to plant
-        plant.set_input(float(delta_u[0]))
+        plant.set_input(float(control_moves[0]))
         
         previous_output = plant.y
         time_step += 1
@@ -105,7 +103,7 @@ if __name__ == "__main__":
     DataEnv.run(until=duration)
 
     if dynamicMatrix is None:
-        dynamicMatrix = build_dynamic_matrix(step_response, len(step_response), 10)
+        dynamicMatrix = build_dynamic_matrix(step_response, len(step_response), 1)
 
 
     # MPC Time
@@ -114,6 +112,7 @@ if __name__ == "__main__":
 
     # After the MPC simulation, collect and plot results
     mpc_output = []
+    mpc_control = []
     mpc_time = []
 
     def collect_mpc_output(env, plant, duration):
@@ -126,23 +125,24 @@ if __name__ == "__main__":
                 y_value = float(y_value)
             mpc_output.append(y_value)
             mpc_time.append(env.now)
+            mpc_control.append(float(plant.u))  # Ensure we always append a scalar value for control
             yield env.timeout(plant.dt)
 
     # Reset plant for MPC simulation
-    plant_mpc = SimPlant(kp=1000, time_constant=0.8, dt=0.01)
+    plant.reset()
 
     # Create a proper step function: 0 for first second, then 500 for rest
-    num_points = int(mpc_duration / plant_mpc.dt)
+    num_points = int(mpc_duration / plant.dt)
     step_time = 1.0  # Step occurs at t = 1.0 seconds
-    step_index = int(step_time / plant_mpc.dt)
+    step_index = int(step_time / plant.dt)
     
     response = np.zeros(num_points)
     response[step_index:] = 500.0  # Step from 0 to 500 at t=1s
     
     mpcEnv = simpy.Environment()
-    mpcEnv.process(plant_mpc.run(mpcEnv))
-    mpcEnv.process(RunDMC(mpcEnv, plant_mpc, dynamicMatrix, response))
-    mpcEnv.process(collect_mpc_output(mpcEnv, plant_mpc, mpc_duration))
+    mpcEnv.process(plant.run(mpcEnv))
+    mpcEnv.process(RunDMC(mpcEnv, plant, dynamicMatrix, response, lambda_reg=0.1))
+    mpcEnv.process(collect_mpc_output(mpcEnv, plant, mpc_duration))
 
     mpcEnv.run(until=mpc_duration)
 
@@ -153,11 +153,14 @@ if __name__ == "__main__":
     plt.plot(mpc_time, mpc_output, label='Plant Output')
     
     # Create time array for setpoint plotting
-    setpoint_time = np.arange(0, mpc_duration, plant_mpc.dt)
-
-
-
+    setpoint_time = np.arange(0, mpc_duration, plant.dt)
     plt.plot(setpoint_time, response, label='Setpoint', linestyle='--')
+
+    ax2 = plt.twinx()
+    ax2.set_ylim([0, 2])
+    ax2.plot(mpc_time, mpc_control, label='Control Signal', linestyle='--', color='orange')
+    ax2.set_ylabel('Control Signal')
+    
     plt.xlabel('Time (s)')
     plt.ylabel('Output')
     plt.legend()

@@ -26,6 +26,10 @@ class SimPlant:
             yield env.timeout(self.dt)
 
 
+    def reset(self):
+        self.y = 0.0
+        self.u = 0.0
+    
     def get_steady_state(self):
         return self.kp * self.u
         
