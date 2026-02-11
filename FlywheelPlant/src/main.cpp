@@ -12,6 +12,10 @@ int duino_dt = 10; // In miliseconds Should be smaller than matlab`
 float rpm = 0;
 int timediff = 0;
 
+// RPM EMA
+float alpha = 0.1; // Smoothing factor (0 < alpha < 1)
+float rpm_ema = 0; // Initialize EMA value
+
 void addPulse() { pulseCount++; }
 
 void setup() {
@@ -36,7 +40,10 @@ void loop() {
         digitalPinToInterrupt(InteruptPin)); // Stop counting while calculating
     rpm = (float)pulseCount * Encoder_to_RPM / timediff;
 
-    byte *b = (byte *)&rpm; // Convert float to byte array
+    // Update RPM EMA
+    rpm_ema = alpha * rpm + (1 - alpha) * rpm_ema;
+
+    byte *b = (byte *)&rpm_ema; // Convert float to byte array
 
     Serial.write(b, 4);
 
