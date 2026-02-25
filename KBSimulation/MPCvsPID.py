@@ -13,16 +13,13 @@ def main():
 
     # share a random number generator so noise sequences match  
     rng = np.random.default_rng(42)  # fixed seed for reproducibility
-    pid_plant = FirstOrderPlant(kp=1000, time_constant=0.8, dt=plant_dt, std=0, rng=rng)
-    dmc_plant = FirstOrderPlant(kp=1000, time_constant=0.8, dt=plant_dt, std=0, rng=rng)
-    # noise already configured via constructor; seed ensures identical samples
-    pid_plant.std = 0
-    dmc_plant.std = 0
+    pid_plant = FirstOrderPlant(kp=1000, time_constant=0.3, dt=plant_dt, std=0, rng=rng, dead_time=0.05)
+    dmc_plant = FirstOrderPlant(kp=1000, time_constant=0.3, dt=plant_dt, std=0, rng=rng, dead_time=0.05)
 
 
     # pid_controller = PIDController(pid_plant, kp=0.00596, ki=0.0284, kd=0.0, dt=cont_dt, setpoint=500)
-    pid_controller = PIDController(pid_plant, kp=0.1, ki=0.001, kd=0.0, dt=cont_dt, setpoint=500)
-    dmc_controller = DynamicMatrixController(dmc_plant, dt=cont_dt, setpoint=500, prediction_horizon=3, control_horizon=2)
+    pid_controller = PIDController(pid_plant, kp=0.001, ki=0.0097, kd=0.0, dt=cont_dt, setpoint=500)
+    dmc_controller = DynamicMatrixController(dmc_plant, dt=cont_dt, setpoint=500, prediction_horizon=20, control_horizon=20)
     
 
     # PID
@@ -33,7 +30,7 @@ def main():
     env.process(dmc_controller.run(env))
     env.process(dmc_plant.run(env))
 
-    env.run(until=0.25)
+    env.run(until=1.0)
 
     # Talk this way
     print("PID Output History:", [float(y) for y in pid_plant.output_history])

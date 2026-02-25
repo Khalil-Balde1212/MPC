@@ -11,9 +11,9 @@ def main():
     env = simpy.Environment()
 
     rng = np.random.default_rng(42)
-    closed_plant = FirstOrderPlant(kp=1000, time_constant=0.8, dt=plant_dt, std=0, rng=rng)
-    open_plant = FirstOrderPlant(kp=1000, time_constant=0.8, dt=plant_dt, std=0, rng=rng)
-    controller = PIDController(closed_plant, kp=0.05, ki=0.01, kd=0.0, dt=cont_dt, setpoint=1000)
+    closed_plant = FirstOrderPlant(kp=1000, time_constant=0.3, dt=plant_dt, std=0, rng=rng, dead_time=0.05)
+    open_plant = FirstOrderPlant(kp=1000, time_constant=0.3, dt=plant_dt, std=0, rng=rng, dead_time=0.05)
+    controller = PIDController(closed_plant, kp=0.0014, ki=0.009795198, kd=0.0, dt=cont_dt, setpoint=1000)
     open_plant.set_input(1)  # Initial input for open loop
 
     env.process(controller.run(env))

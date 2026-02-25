@@ -2,7 +2,7 @@ import simpy
 import numpy as np
 
 class FirstOrderPlant:
-    def __init__(self, kp=1000.0, time_constant=0.1, dt=0.01, std=0.0, rng=None):
+    def __init__(self, kp=1000.0, time_constant=0.1, dt=0.01, std=0.0, rng=None, dead_time =0.0):
         # kp is the plant gain: steady-state output = kp * input
         # default kp=1000 makes a unit input (u=1) drive the output to 1000.
         self.kp = kp
@@ -11,8 +11,15 @@ class FirstOrderPlant:
         self.y = 0.0  # initial state
         self.u = 0.0  # control input
 
-        self.output_history = [] 
+        self.output_history = []
+        # Dead time parameters
+        self.dead_time = dead_time  # seconds, default no dead time
+        self.input_buffer = []  # buffer for delayed input
         self.times = []
+
+        #populate deadtime
+        self.dead_time_steps = int(self.dead_time / self.dt)
+        self.input_buffer = [0.0] * self.dead_time_steps  # initialize with zeros
 
         # non linearities
         self.max_input = 5.0
@@ -30,8 +37,11 @@ class FirstOrderPlant:
 
     def step(self):
         # Simple linear plant: tau*y' + y = kp*u
-        self.y = self.y + (self.dt / self.tau) * (self.kp * self.u - self.y)
-
+        if self.dead_time_steps > 0:
+            self.y = self.y + (self.dt / self.tau) * (self.kp * self.input_buffer.pop(0) - self.y)
+            self.input_buffer.append(self.u)  # add current input to buffer for dead time
+        else:
+            self.y = self.y + (self.dt / self.tau) * (self.kp * self.u - self.y)
         # Add Gaussian noise
         if self.std > 0:
             # use assigned RNG so multiple plants can share the same sequence
